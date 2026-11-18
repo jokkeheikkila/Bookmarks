@@ -2,6 +2,8 @@
 
 A lightweight, single-page bookmark dashboard backed by a plain Markdown file (`bookmarks.md`). Works directly by opening `index.html` via `file://` with no build step or dependencies, and supports saving edits back to disk via the File System Access API or an optional local Node.js helper (`server.js`).
 
+![Bookmarks Screenshot](screenshot.png)
+
 ## Features
 
 - **Zero-build & offline-ready**: Open `index.html` directly in any modern browser (`file://`), or serve it locally.
