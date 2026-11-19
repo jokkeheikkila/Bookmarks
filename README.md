@@ -1,6 +1,6 @@
 # Bookmarks
 
-A lightweight, single-page bookmark dashboard backed by a plain Markdown file (`bookmarks.md`). Works directly by opening `index.html` via `file://` with no build step or dependencies, and supports saving edits back to disk via the File System Access API or an optional local Node.js helper (`server.js`).
+A lightweight, single-page bookmark dashboard backed by a plain Markdown file (`bookmarks.md`). Works directly by opening `index.html` via `file://` with no build step or dependencies, and supports saving edits back to disk via the File System Access API.
 
 ![Bookmarks Screenshot](screenshot.png)
 
@@ -29,19 +29,13 @@ A lightweight, single-page bookmark dashboard backed by a plain Markdown file (`
 
 ### Saving Changes to `bookmarks.md`
 
-The UI supports three ways to persist changes:
+The UI supports two ways to persist changes:
 
-1. **Optional local Node.js server (recommended for automatic saving)**:
-   ```bash
-   node server.js
-   ```
-   Starts a zero-dependency helper on `http://127.0.0.1:17380`. Works both when visiting `http://localhost:17380` and when opening `index.html` via `file://`, automatically writing every change to `bookmarks.md`.
-
-2. **Browser File System Access API**:
+1. **Browser File System Access API**:
    Click **Link bookmarks.md** in the header (or **Save bookmarks.md** / `Ctrl/Cmd + S`) to grant write access to `bookmarks.md` once (persisted via IndexedDB in supported Chromium browsers).
 
-3. **Clipboard fallback**:
-   If neither `server.js` nor the File System Access API is available, clicking **Save bookmarks.md** copies the full `bookmarks.md` content to your clipboard.
+2. **Clipboard fallback**:
+   If the File System Access API is not available, clicking **Save bookmarks.md** copies the full `bookmarks.md` content to your clipboard.
 
 ## Keyboard Shortcuts
 
@@ -76,7 +70,6 @@ The UI supports three ways to persist changes:
 
 - **`index.html`** — Complete single-file UI, CSS, Markdown parser/serializer, search, theme toggle, modal forms, and drag-and-drop logic.
 - **`bookmarks.md`** — Your bookmarks data in Markdown format (includes a small set of starter example links).
-- **`server.js`** — Optional zero-dependency local Node.js server (`127.0.0.1:17380`) for serving the app and auto-saving directly to `bookmarks.md`.
 
 ## License
 

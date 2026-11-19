@@ -830,7 +830,6 @@
     const STORAGE_KEY_SNAPSHOT = "bookmarks_snapshot_v3";
     const STORAGE_KEY_BASE_MD = "bookmarks_base_md_v3";
     const STORAGE_KEY_THEME = "bookmarks_theme";
-    const LOCAL_SERVER_URL = "http://127.0.0.1:17380";
 
     let baseCategories = [];
     let categories = [];
@@ -838,7 +837,6 @@
     let activeCategory = "ALL";
     let searchQuery = "";
     let fileHandle = null;
-    let serverAvailable = false;
     let draggedItem = null;
     let draggedCategoryIdx = null;
     let draggedSubcategory = null;
@@ -884,11 +882,7 @@
 
     function updateStatusPill() {
       const pill = document.getElementById("statusPill");
-      if (serverAvailable) {
-        pill.className = "status-pill connected";
-        pill.textContent = "● Auto-Save Active (server.js)";
-        pill.title = "Connected to local server.js — all changes overwrite bookmarks.md automatically";
-      } else if (fileHandle) {
+      if (fileHandle) {
         pill.className = "status-pill connected";
         pill.textContent = `● Linked: ${fileHandle.name}`;
         pill.title = "Linked to bookmarks.md via File System API (click to re-select file)";
@@ -1011,12 +1005,8 @@
     async function recordChange() {
       localStorage.setItem(STORAGE_KEY_SNAPSHOT, JSON.stringify(categories));
 
-      // If connected to local server.js or if fileHandle already has granted permission, auto-save in place first!
-      if (serverAvailable) {
-        if (await trySaveViaServer(serializeToBookmarksMd(categories), true)) {
-          return;
-        }
-      } else if (fileHandle && fileHandle.queryPermission) {
+      // If fileHandle already has granted permission, auto-save in place first!
+      if (fileHandle && fileHandle.queryPermission) {
         try {
           const perm = await fileHandle.queryPermission({ mode: "readwrite" });
           if (perm === "granted") {
@@ -1758,28 +1748,6 @@
       }
     }
 
-    async function trySaveViaServer(content, silent = false) {
-      try {
-        const resp = await fetch(`${LOCAL_SERVER_URL}/api/save`, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: content
-        });
-        if (resp.ok) {
-          serverAvailable = true;
-          baseCategories = JSON.parse(JSON.stringify(categories));
-          clearSnapshot();
-          updateStatusPill();
-          showToast(silent ? "Auto-saved to bookmarks.md" : "Saved to bookmarks.md");
-          return true;
-        }
-      } catch {
-        serverAvailable = false;
-        updateStatusPill();
-      }
-      return false;
-    }
-
     async function writeToFileHandle(handle, content) {
       const writable = await handle.createWritable();
       await writable.write(content);
@@ -1792,7 +1760,7 @@
 
     async function pickAndLinkBookmarksFile() {
       if (!("showSaveFilePicker" in window)) {
-        showToast("Direct file picker not supported here — use node server.js or copy Markdown");
+        showToast("Direct file picker not supported here — copy Markdown instead");
         return null;
       }
       try {
@@ -1819,12 +1787,7 @@
     async function saveToBookmarksMdFile() {
       const content = serializeToBookmarksMd(categories);
 
-      // 1. Try local server.js ONLY if detected at startup (so we don't lose user gesture awaiting a failed fetch)
-      if (serverAvailable && await trySaveViaServer(content, false)) {
-        return true;
-      }
-
-      // 2. Try existing linked FileSystemFileHandle (overwrites in place without file dialog!)
+      // 1. Try existing linked FileSystemFileHandle (overwrites in place without file dialog!)
       if (fileHandle) {
         try {
           let perm = await fileHandle.queryPermission({ mode: "readwrite" });
@@ -2017,12 +1980,8 @@
       setActiveCategory(resolveInitialCategoryFromUrl(), false);
       updateSyncBanner();
 
-      // Load remembered fileHandle from IndexedDB & probe local server.js
+      // Load remembered fileHandle from IndexedDB
       fileHandle = await loadStoredFileHandle();
-      try {
-        const ping = await fetch(`${LOCAL_SERVER_URL}/api/ping`);
-        if (ping.ok) serverAvailable = true;
-      } catch {}
       updateStatusPill();
 
       document.getElementById("statusPill").onclick = async () => {
